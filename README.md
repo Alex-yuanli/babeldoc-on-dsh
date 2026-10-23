@@ -9,7 +9,7 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 
 插件本身不含任何密钥，也不含 Python 运行时；密钥由使用者自己在 harness 里填。
 
-这个插件的原理是，复用DSH自带的Python 3.12 搭建虚拟环境，在这个虚拟环境里跑了一个BabelDOC应用，最后翻译时借助本插件在deepseek harness里调用此BabelDOC应用
+这个插件的原理是，复用DSH自带的Python 3.12 搭建虚拟环境，在这个虚拟环境里跑了一个BabelDOC应用，最后翻译时借助本插件在deepseek harness里调用此BabelDOC应用。
 插件不参与逐句翻译，DSH也不。插件只做四件事：拼参数、起进程、收产物、报错。译文的每一个字都是 BabelDOC 拿着你的 key 直接请求 api.deepseek.com 得到的——所以花的是你的 API 额度，跟对话消耗的 token 是两笔账。
 
 ## 目录
