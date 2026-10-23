@@ -83,7 +83,7 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 
 ## 配置API key
 
-第一次使用时直接在输入框里执行：
+第一次使用时直接在deepseek harness的会话框里执行：
 
 ```text
 /babeldoc key sk-xxxxxxxxxxxxxxxx
