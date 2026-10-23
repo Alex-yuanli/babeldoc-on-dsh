@@ -32,20 +32,31 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 
 仓库地址：<https://github.com/Alex-yuanli/babeldoc-on-dsh>
 
-会话中安装
+**会话中安装**（当前进程立即生效）
 
 ```text
 plugin_manager { action: "install_bundle", target: "git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git" }
 ```
 
-终端中安装
+**终端中安装**（改 profile 文件，重启 DSH 后生效；需要本机有 `git`）
 
 ```powershell
-dsh plugin --profile desktop add git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git
+dsh plugin --profile <profile 名> add git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git
 ```
 
+`<profile 名>` 是你正在用的 profile，桌面版常见为 `desktop` 或 `web`。**注意写错名字时 dsh 不会报错**，而是静默新建一个空 profile 把插件装进去，GUI 里看不到——装完没反应先回头看这个。
 
-安装后该插件在当前 profile 指定的会话中生效，并随 DSH 重启保留。装完还需要准备 BabelDOC 运行时（见「运行环境」），再执行一次 `/babeldoc key <你的 key>`。
+没有 `git` 时 pnpm 会报 `[ERR_PNPM_GIT_RESOLVE_FAILED] git ls-remote failed`，这时改用上面的会话内安装，或者先 clone、再按本地目录安装：
+
+```powershell
+git clone https://github.com/Alex-yuanli/babeldoc-on-dsh.git
+```
+
+```text
+plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-dsh" }
+```
+
+安装后该插件在该 profile 下的**所有会话**中生效，并随 DSH 重启保留。装完还需要准备 BabelDOC 运行时（见「运行环境」），再执行一次 `/babeldoc key <你的 key>`。
 
 ## 配置API key
 
