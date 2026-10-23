@@ -32,23 +32,20 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 
 仓库地址：<https://github.com/Alex-yuanli/babeldoc-on-dsh>
 
-不 clone 也能装，直接把 git 地址交给 `install_bundle`：
+会话中安装
 
 ```text
 plugin_manager { action: "install_bundle", target: "git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git" }
 ```
 
-也可以先 clone 再按本地目录安装：
+终端中安装
 
 ```powershell
-git clone https://github.com/Alex-yuanli/babeldoc-on-dsh.git
+dsh plugin --profile desktop add git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git
 ```
 
-```text
-plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-dsh" }
-```
 
-安装后该插件在当前 profile 的所有会话中生效，并随 DSH 重启保留。装完还需要准备 BabelDOC 运行时（见「运行环境」），再执行一次 `/babeldoc key <你的 key>`。
+安装后该插件在当前 profile 指定的会话中生效，并随 DSH 重启保留。装完还需要准备 BabelDOC 运行时（见「运行环境」），再执行一次 `/babeldoc key <你的 key>`。
 
 ## 配置API key
 
