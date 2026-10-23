@@ -1,6 +1,6 @@
 {
   "name": "babeldoc-on-dsh",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "type": "module",
   "description": "BabelDoc-on-dsh: a DeepSeek Harness plugin bundle that translates PDFs through BabelDOC while keeping their original layout.",

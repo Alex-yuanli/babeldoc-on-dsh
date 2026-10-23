@@ -7,6 +7,19 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 - `*.dual.pdf` —— 原页与译文对照的双语版
 - `*.mono.pdf` —— 仅译文的版本
 
+下面是同一篇论文（*Attention Is All You Need*）翻出来的实际效果，图里可以看到公式、图表和页边 arXiv 水印都留在原位：
+
+<table>
+  <tr>
+    <td width="50%"><img width="760" alt="双语版：左原文 / 右译文" src="https://raw.githubusercontent.com/Alex-yuanli/babeldoc-on-dsh/main/docs/preview-dual.png"></td>
+    <td width="50%"><img width="380" alt="纯译文版：公式与图表保持原位" src="https://raw.githubusercontent.com/Alex-yuanli/babeldoc-on-dsh/main/docs/preview-mono.png"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub><code>*.dual.pdf</code> —— 左原文 / 右译文</sub></td>
+    <td align="center"><sub><code>*.mono.pdf</code> —— 公式、图表保持原位</sub></td>
+  </tr>
+</table>
+
 插件本身不含任何密钥，也不含 Python 运行时；密钥由使用者自己在 harness 里填。
 
 这个插件的原理是，复用DSH自带的Python 3.12 搭建虚拟环境，在这个虚拟环境里跑了一个BabelDOC应用，最后翻译时借助本插件在deepseek harness里调用此BabelDOC应用。
@@ -21,6 +34,7 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 | `index.js` | Host 插件：注册 `babeldoc_translate` 工具与 `/babeldoc` 命令 |
 | `locale/en.json`、`locale/zh.json` | 插件管理器中显示的名称与说明 |
 | `icon.svg` | 插件图标（原创） |
+| `docs/preview-*.png` | README 顶部的效果预览图 |
 | `scripts/setup-runtime.mjs` | 一键安装运行时（venv + BabelDOC + 模型字体） |
 | `scripts/seed-assets.py` | 只补下模型字体（setup 脚本的第 4 步） |
 | `test/plugin.test.mjs` | 无需 Host、浏览器或模型的纯 Node 行为测试 |
@@ -69,7 +83,7 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 
 ## 配置API key
 
-第一次使用时直接在deepseek harness的会话框里执行：
+第一次使用时直接在输入框里执行：
 
 ```text
 /babeldoc key sk-xxxxxxxxxxxxxxxx
