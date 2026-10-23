@@ -111,17 +111,17 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 插件依赖一份独立的 BabelDOC 运行时：
 
 ```text
-C:\Users\32bitfloat\.dsh\babeldoc\
+C:\Users\name\.dsh\babeldoc\
   venv\               用 DSH 自带的 Python 3.12 建的虚拟环境
   venv\Scripts\babeldoc.exe
 ```
 
-它由 `pip install babeldoc` 装进独立 venv，不污染 DSH 自带运行时，也不影响系统里的 Python 3.9。注意 `bitstring` 需要 `<5`，5.x 删掉了 BabelDOC 用到的 `BitStream`。
+它由 `pip install babeldoc` 装进独立 venv，不污染 DSH 自带运行时，也不影响系统里的 Python。注意 `bitstring` 需要 `<5`，5.x 删掉了 BabelDOC 用到的 `BitStream`。
 
 首次翻译还会用到版面分析模型与字体（约 370MB），默认缓存在 `%USERPROFILE%\.cache\babeldoc`。BabelDOC 会探测多个下载源并选最先响应的一个；在访问 GitHub / HuggingFace 受限的网络里这个选择会让下载全部超时，此时用插件自带的脚本从魔搭镜像逐个下载并校验：
 
 ```powershell
-C:\Users\32bitfloat\.dsh\babeldoc\venv\Scripts\python.exe babeldoc-on-dsh\scripts\seed-assets.py
+C:\Users\name\.dsh\babeldoc\venv\Scripts\python.exe babeldoc-on-dsh\scripts\seed-assets.py
 ```
 
 ## 测试
