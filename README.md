@@ -177,7 +177,7 @@ node babeldoc-on-dsh\test\plugin.test.mjs
 
 ## 排查
 
-- 报「runtime not found」：跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs`，或确认 `babeldocPath` 指向的 `babeldoc.exe` 存在。
+- 报「runtime not found」：报错会列出尝试过的每个路径。插件会把配置里继承来的 `C:\Users\<别人>\.dsh\...` 自动换成本机用户主目录再找，所以通常跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs` 即可；也可以让 `babeldocPath` 直接指向存在的 `babeldoc.exe`。
 - 报「needs an OpenAI-compatible API key」：先执行 `/babeldoc key <你的 key>`。
 - 不确定缺什么：执行 `/babeldoc status`，它会分别报告运行时、模型字体、Key 的状态并给出下一步。
 - 翻译中途报错：结果里的 `Log:` 指向完整日志，常见原因是余额不足、模型名不对或 PDF 损坏。
@@ -189,4 +189,4 @@ node babeldoc-on-dsh\test\plugin.test.mjs
 plugin_manager { action: "remove_bundle", target: "babeldoc-on-dsh" }
 ```
 
-运行时目录 `C:\Users\32bitfloat\.dsh\babeldoc` 与缓存 `%USERPROFILE%\.cache\babeldoc` 可手动删除。
+运行时目录 `%USERPROFILE%\.dsh\babeldoc` 与缓存 `%USERPROFILE%\.cache\babeldoc` 可手动删除。

@@ -10,7 +10,10 @@
       name: babeldoc-on-dsh
       config:
         # Absolute path of the BabelDOC launcher in the managed runtime.
-        babeldocPath: 'C:\Users\32bitfloat\.dsh\babeldoc\venv\Scripts\babeldoc.exe'
+        # Empty resolves the launcher at load time under the current user's home
+        # directory (%USERPROFILE%\.dsh\babeldoc\venv\Scripts\babeldoc.exe), so this
+        # bundle works on any machine instead of one hard-coded user name.
+        babeldocPath: ''
         # Any OpenAI-compatible endpoint. BabelDOC needs an LLM to translate.
         baseUrl: 'https://api.deepseek.com/v1'
         model: 'deepseek-chat'

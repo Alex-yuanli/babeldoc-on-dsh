@@ -27,6 +27,70 @@ const DEFAULT_RUNTIME =
     ? join(homedir(), '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe')
     : join(homedir(), '.dsh', 'babeldoc', 'venv', 'bin', 'babeldoc')
 
+/**
+ * The prefix of an absolute path that names a user's home directory, for the
+ * Windows (`C:\Users\<name>`), macOS (`/Users/<name>`) and Linux
+ * (`/home/<name>`) layouts, plus the remainder of that path.
+ */
+const HOME_PREFIX = /^([A-Za-z]:[\\/]Users[\\/][^\\/]+|[\\/](?:Users|home)[\\/][^\\/]+)([\\/].*)?$/
+
+/**
+ * Split an absolute path into its home-directory prefix and the rest.
+ * @param {unknown} value Path to inspect.
+ * @returns {{ home: string, rest: string } | undefined} The split, or undefined when the path does not start with a home directory.
+ */
+function splitHomePrefix(value) {
+  if (typeof value !== 'string') return undefined
+  const match = HOME_PREFIX.exec(value.trim())
+  return match === null ? undefined : { home: match[1], rest: match[2] ?? '' }
+}
+
+/**
+ * Rewrite a launcher path that was written for another user's home directory
+ * onto the current user's home, so a bundle configured on one machine keeps
+ * working after the profile is copied or reinstalled on another one.
+ * @param {unknown} value Configured launcher path.
+ * @returns {unknown} The rebased path, or the input when it needs no change.
+ */
+export function rebaseHomePath(value) {
+  const parts = splitHomePrefix(value)
+  if (parts === undefined) return value
+  const current = splitHomePrefix(homedir())
+  if (current === undefined) return value
+  const sameHome =
+    process.platform === 'win32'
+      ? parts.home.toLowerCase() === current.home.toLowerCase()
+      : parts.home === current.home
+  if (sameHome) return value
+  const tail = parts.rest.split(/[\\/]+/).filter((segment) => segment !== '')
+  return join(homedir(), ...tail)
+}
+
+/**
+ * Resolve the BabelDOC launcher. A path that still names another machine's home
+ * directory is rebased onto this user's home, so the managed runtime is found
+ * without the user editing the configuration: the configured path wins, then
+ * the same path rebased onto this home, then the managed default.
+ * @param {unknown} configured The `babeldocPath` setting.
+ * @returns {{ runtime: string, found: boolean, tried: string[] }} Resolution result.
+ */
+function resolveRuntime(configured) {
+  const tried = []
+  const push = (value) => {
+    if (typeof value !== 'string') return
+    const candidate = value.trim()
+    if (candidate !== '' && !tried.includes(candidate)) tried.push(candidate)
+  }
+  const rebased = rebaseHomePath(configured)
+  push(configured)
+  push(rebased)
+  push(DEFAULT_RUNTIME)
+  const found = tried.find((candidate) => existsSync(candidate))
+  if (found !== undefined) return { runtime: found, found: true, tried }
+  const expected = typeof rebased === 'string' && rebased.trim() !== '' ? rebased.trim() : DEFAULT_RUNTIME
+  return { runtime: expected, found: false, tried }
+}
+
 /** Where `/babeldoc key` stores the key the user types into the composer. */
 const SETTINGS_PATH = join(homedir(), '.dsh', 'babeldoc', 'settings.json')
 
@@ -465,12 +529,18 @@ export function apply(ctx, config) {
           }
         }
         const files = inputFiles(arg(args, 'files'), baseDir)
-        const runtime = typeof settings.babeldocPath === 'string' && settings.babeldocPath !== '' ? settings.babeldocPath : DEFAULT_RUNTIME
-        if (!existsSync(runtime)) {
+        const resolved = resolveRuntime(settings.babeldocPath)
+        if (!resolved.found) {
           throw new Error(
-            `BabelDOC runtime not found at ${runtime}. Install it once with:\n  ${SETUP_COMMAND}\nThen retry, or point babeldocPath at an existing babeldoc executable.`,
+            [
+              'BabelDOC runtime not found. Tried:',
+              ...resolved.tried.map((candidate) => `  ${candidate}`),
+              `Install it once with:\n  ${SETUP_COMMAND}`,
+              'Then retry, or point babeldocPath at an existing babeldoc executable.',
+            ].join('\n'),
           )
         }
+        const runtime = resolved.runtime
         const { apiKey, baseUrl, model } = endpoint()
         if (apiKey === '') {
           throw new Error(
@@ -571,18 +641,18 @@ export function apply(ctx, config) {
           const verb = (parts[0] ?? '').toLowerCase()
           const value = parts.slice(1).join(' ').trim()
           const current = endpoint()
-          const runtime =
-            typeof settings.babeldocPath === 'string' && settings.babeldocPath !== '' ? settings.babeldocPath : DEFAULT_RUNTIME
+          const resolved = resolveRuntime(settings.babeldocPath)
+          const runtime = resolved.runtime
           switch (verb) {
             case '':
             case 'status': {
               const assets = assetCounts()
-              const runtimeReady = existsSync(runtime)
+              const runtimeReady = resolved.found
               const assetsReady = assets.fonts > 0 && assets.cmaps > 0 && assets.models > 0
               const counts = `字体 ${assets.fonts} · cmap ${assets.cmaps} · 模型 ${assets.models}`
               const next =
                 !runtimeReady
-                  ? `运行时未安装，先执行一次：\n  ${SETUP_COMMAND}`
+                  ? `运行时未安装（已尝试：${resolved.tried.join('、') || runtime}），先执行一次：\n  ${SETUP_COMMAND}`
                   : !assetsReady
                     ? `模型/字体未下载完整（${counts}），执行一次可补全，已完成的会跳过：\n  ${SETUP_COMMAND}`
                     : current.apiKey === ''

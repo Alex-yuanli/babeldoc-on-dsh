@@ -8,7 +8,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { apply } from '../index.js'
+import { apply, rebaseHomePath } from '../index.js'
 
 const HOME = homedir()
 const SETTINGS = join(HOME, '.dsh', 'babeldoc', 'settings.json')
@@ -140,4 +140,20 @@ test('status names the bundled setup script when the runtime is missing', () => 
   assert.match(status.text, /运行时未安装/)
   assert.match(status.text, /setup-runtime\.mjs/)
   rmSync(SETTINGS, { force: true })
+})
+
+test('rewrites a launcher path that names another user onto this home', () => {
+  const elsewhere = join(dirname(homedir()), 'another-user')
+  const configured = join(elsewhere, '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe')
+  const rebased = rebaseHomePath(configured)
+  assert.equal(rebased, join(homedir(), '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe'))
+  assert.ok(!rebased.toLowerCase().includes('another-user'))
+})
+
+test('leaves a path under this home or outside any home unchanged', () => {
+  const mine = join(homedir(), '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe')
+  assert.equal(rebaseHomePath(mine), mine)
+  assert.equal(rebaseHomePath('C:/tools/babeldoc/babeldoc.exe'), 'C:/tools/babeldoc/babeldoc.exe')
+  assert.equal(rebaseHomePath(''), '')
+  assert.equal(rebaseHomePath(undefined), undefined)
 })
