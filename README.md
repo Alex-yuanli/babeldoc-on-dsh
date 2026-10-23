@@ -45,7 +45,7 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 
 安装后该插件在当前 profile 的所有会话中生效，并随 DSH 重启保留。装完还需要准备 BabelDOC 运行时（见「运行环境」），再执行一次 `/babeldoc key <你的 key>`。
 
-## 配置密钥
+## 配置API key
 
 第一次使用时直接在输入框里执行：
 
@@ -55,7 +55,7 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 
 - 密钥写入 `%USERPROFILE%\.dsh\babeldoc\settings.json`，**不进入会话记录**（该命令声明了 `recordInput: false`）。
 - 命令回显只显示 `sk-x...xxxx` 这样的掩码。
-- 发布插件时包里不含任何密钥，每个使用者填自己的。
+- 发布插件时包里不含任何api key，每个使用者填自己的。
 
 其它子命令：
 
