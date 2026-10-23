@@ -140,7 +140,7 @@ node babeldoc-on-dsh\scripts\setup-runtime.mjs
 
 1. **找 Python**：优先 DSH 自带的 3.12，其次 `py -3.12` / `python3.12` / `python3`，都要求 `3.10 ≤ 版本 < 3.14`
 2. **建 venv**：`%USERPROFILE%\.dsh\babeldoc\venv`，已存在且可用则直接复用
-3. **装 BabelDOC**：按 **USTC → 阿里云 → 腾讯云 → 华为云 → 官方 PyPI** 依次尝试，命中即停；同时把 `bitstring` 锁在 `<5`（5.x 删掉了 BabelDOC 用到的 `BitStream`）
+3. **装 BabelDOC**：按 **USTC → 阿里云 → 腾讯云 → 华为云 → 官方 PyPI** 依次尝试，命中即停；同时把 `bitstring` 锁在 `<5`（5.x 删掉了 BabelDOC 用到的 `BitStream`）、把 `pymupdf` 锁在 `<2`（2.0 的 `_mupdf` 扩展在部分 Windows 上加载失败，`babeldoc` 一启动就崩）
 4. **下模型字体**：约 370MB，走**魔搭（ModelScope）**镜像，逐文件校验 sha3-256
 
 | 参数 | 作用 |
@@ -179,6 +179,8 @@ node babeldoc-on-dsh\test\plugin.test.mjs
 
 - 报「runtime not found」：报错会列出尝试过的每个路径。插件会把配置里继承来的 `C:\Users\<别人>\.dsh\...` 自动换成本机用户主目录再找，所以通常跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs` 即可；也可以让 `babeldocPath` 直接指向存在的 `babeldoc.exe`。
 - 报「needs an OpenAI-compatible API key」：先执行 `/babeldoc key <你的 key>`。
+- `babeldoc.exe` 一启动就崩，报 `ImportError: DLL load failed while importing _mupdf`：PyMuPDF 2.0 在部分 Windows 上加载不了这个扩展。一键脚本已固定 `pymupdf<2`，若手动升级过，用 venv 里的解释器降回 1.26.x：
+  `%USERPROFILE%\.dsh\babeldoc\venv\Scripts\python.exe -m pip install "pymupdf<2"`
 - 不确定缺什么：执行 `/babeldoc status`，它会分别报告运行时、模型字体、Key 的状态并给出下一步。
 - 翻译中途报错：结果里的 `Log:` 指向完整日志，常见原因是余额不足、模型名不对或 PDF 损坏。
 - 部分 PDF 排版错乱：调用时传 `enhance_compatibility: true`。

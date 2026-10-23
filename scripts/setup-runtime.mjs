@@ -178,14 +178,14 @@ if (existsSync(VENV_PYTHON) && pythonVersion(VENV_PYTHON) !== undefined) {
 }
 
 const mirrors = mirrorOverride === undefined ? MIRRORS : [['自定义', mirrorOverride]]
-console.log('3/4 安装 BabelDOC（含 bitstring<5，5.x 删掉了它用到的 BitStream）')
+console.log('3/4 安装 BabelDOC（含 bitstring<5 与 pymupdf<2 两个版本上限）')
 let installed = false
 for (const [label, url] of mirrors) {
   console.log(`    → 尝试 ${label}: ${url}`)
   const code = run(VENV_PYTHON, [
     '-m', 'pip', 'install', '--only-binary=:all:',
     '-i', url, '--timeout', '60', '--retries', '3',
-    'babeldoc', 'bitstring<5',
+    'babeldoc', 'bitstring<5', 'pymupdf<2',
   ])
   if (code === 0) {
     installed = true
