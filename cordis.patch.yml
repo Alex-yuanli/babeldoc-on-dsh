@@ -1,0 +1,28 @@
+# Bundle patch applied over the selected DSH profile when this package is
+# listed in `dsh.profile.bundles`. The row id is deployment-local; the package
+# name must match package.json exactly.
+#
+# The plugin registers the `babeldoc_translate` Agent tool, which runs the
+# locally installed BabelDOC CLI to translate PDFs while preserving layout.
+
+- insert:
+    - id: babeldoc-on-dsh
+      name: babeldoc-on-dsh
+      config:
+        # Absolute path of the BabelDOC launcher in the managed runtime.
+        babeldocPath: 'C:\Users\32bitfloat\.dsh\babeldoc\venv\Scripts\babeldoc.exe'
+        # Any OpenAI-compatible endpoint. BabelDOC needs an LLM to translate.
+        baseUrl: 'https://api.deepseek.com/v1'
+        model: 'deepseek-chat'
+        # Prefer /babeldoc key <sk-...> in the composer: it stores the key in
+        # %USERPROFILE%\.dsh\babeldoc\settings.json without recording it in the
+        # session. A value here is only a fallback for managed deployments.
+        apiKey: ''
+        langIn: 'en'
+        langOut: 'zh'
+        # Empty means "write next to each input PDF".
+        outputDir: ''
+        qps: 4
+        # Model/font downloads go through this Hugging Face mirror.
+        hfEndpoint: 'https://hf-mirror.com'
+        extraArgs: []

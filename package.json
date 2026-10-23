@@ -1,0 +1,53 @@
+{
+  "name": "babeldoc-on-dsh",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "BabelDoc-on-dsh: a DeepSeek Harness plugin bundle that translates PDFs through BabelDOC while keeping their original layout.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "babeldoc",
+    "pdf",
+    "translation",
+    "plugin"
+  ],
+  "author": "Alex-yuanli",
+  "license": "MIT",
+  "homepage": "https://github.com/Alex-yuanli/babeldoc-on-dsh#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Alex-yuanli/babeldoc-on-dsh/issues"
+  },
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "scripts/*.py",
+    "test/**/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "3.18.1"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

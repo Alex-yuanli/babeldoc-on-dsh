@@ -1,0 +1,6 @@
+# Keep the repository text files LF regardless of the checkout platform.
+* text=auto eol=lf
+
+# The PDF fixture and the icon are binary.
+*.pdf binary
+*.png binary

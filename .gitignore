@@ -1,0 +1,15 @@
+# Dependencies are installed by the consumer's package manager (npm, pnpm, or
+# dsh's own install_bundle). The copy committed while developing the plugin
+# locally must not be published.
+node_modules/
+
+# Local plugin settings and run artifacts.
+*.log
+*.part
+.pnpm-store/
+
+# Editor and OS noise.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

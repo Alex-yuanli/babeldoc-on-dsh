@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "BabelDoc-on-dsh",
+    "description": "在对话中直接翻译 PDF，保留原排版，输出双语对照版与纯译文版。"
+  }
+}
