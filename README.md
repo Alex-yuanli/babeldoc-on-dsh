@@ -73,7 +73,7 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 - id: babeldoc-on-dsh
   name: babeldoc-on-dsh
   config:
-    babeldocPath: 'C:\Users\32bitfloat\.dsh\babeldoc\venv\Scripts\babeldoc.exe'
+    babeldocPath: 'C:\Users\name\.dsh\babeldoc\venv\Scripts\babeldoc.exe'
     baseUrl: 'https://api.deepseek.com/v1'
     model: 'deepseek-chat'
     apiKey: ''
