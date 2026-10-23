@@ -30,23 +30,32 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 
 ## 安装
 
-仓库地址：<https://github.com/Alex-yuanli/babeldoc-on-dsh>
+已发布到 npm：<https://www.npmjs.com/package/babeldoc-on-dsh>
+GitHub 仓库：<https://github.com/Alex-yuanli/babeldoc-on-dsh>
 
-**会话中安装**（当前进程立即生效）
+**会话中安装**（最简，当前进程立即生效）
+
+```text
+plugin_manager { action: "install_bundle", target: "babeldoc-on-dsh" }
+```
+
+**终端中安装**（改 profile 文件，重启 DSH 后生效）
+
+```powershell
+dsh plugin --profile <profile 名> add babeldoc-on-dsh
+```
+
+`<profile 名>` 是你正在用的 profile，桌面版常见为 `desktop` 或 `web`。**注意写错名字时 dsh 不会报错**，而是静默新建一个空 profile 把插件装进去，GUI 里看不到——装完没反应先回头看这个。
+
+### 不走 npm 的装法
+
+想用仓库里的最新提交，或 npm 不可达时：
 
 ```text
 plugin_manager { action: "install_bundle", target: "git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git" }
 ```
 
-**终端中安装**（改 profile 文件，重启 DSH 后生效；需要本机有 `git`）
-
-```powershell
-dsh plugin --profile <profile 名> add git+https://github.com/Alex-yuanli/babeldoc-on-dsh.git
-```
-
-`<profile 名>` 是你正在用的 profile，桌面版常见为 `desktop` 或 `web`。**注意写错名字时 dsh 不会报错**，而是静默新建一个空 profile 把插件装进去，GUI 里看不到——装完没反应先回头看这个。
-
-没有 `git` 时 pnpm 会报 `[ERR_PNPM_GIT_RESOLVE_FAILED] git ls-remote failed`，这时改用上面的会话内安装，或者先 clone、再按本地目录安装：
+这种方式需要本机有 `git`，没有时 pnpm 会报 `[ERR_PNPM_GIT_RESOLVE_FAILED] git ls-remote failed`。也可以先 clone 再按本地目录装：
 
 ```powershell
 git clone https://github.com/Alex-yuanli/babeldoc-on-dsh.git
