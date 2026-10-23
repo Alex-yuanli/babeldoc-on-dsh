@@ -21,6 +21,8 @@ BabelDOC 会保留原 PDF 的排版（字体、公式、图表位置），输出
 | `index.js` | Host 插件：注册 `babeldoc_translate` 工具与 `/babeldoc` 命令 |
 | `locale/en.json`、`locale/zh.json` | 插件管理器中显示的名称与说明 |
 | `icon.svg` | 插件图标（原创） |
+| `scripts/setup-runtime.mjs` | 一键安装运行时（venv + BabelDOC + 模型字体） |
+| `scripts/seed-assets.py` | 只补下模型字体（setup 脚本的第 4 步） |
 | `test/plugin.test.mjs` | 无需 Host、浏览器或模型的纯 Node 行为测试 |
 | `LICENSE` | MIT |
 
@@ -111,7 +113,28 @@ plugin_manager { action: "install_bundle", target: "D:\\path\\to\\babeldoc-on-ds
 
 ## 运行环境
 
-插件依赖一份独立的 BabelDOC 运行时：
+插件依赖一份独立的 BabelDOC 运行时。**装完插件先跑一次一键脚本**——它会自动找 Python、建好 venv、装 BabelDOC，并把模型字体一起下好：
+
+```powershell
+node babeldoc-on-dsh\scripts\setup-runtime.mjs
+```
+
+脚本是幂等的，中断或失败后重跑会从断点继续（已完成的文件校验后跳过）。它做的四步：
+
+1. **找 Python**：优先 DSH 自带的 3.12，其次 `py -3.12` / `python3.12` / `python3`，都要求 `3.10 ≤ 版本 < 3.14`
+2. **建 venv**：`%USERPROFILE%\.dsh\babeldoc\venv`，已存在且可用则直接复用
+3. **装 BabelDOC**：按 **USTC → 阿里云 → 腾讯云 → 华为云 → 官方 PyPI** 依次尝试，命中即停；同时把 `bitstring` 锁在 `<5`（5.x 删掉了 BabelDOC 用到的 `BitStream`）
+4. **下模型字体**：约 370MB，走**魔搭（ModelScope）**镜像，逐文件校验 sha3-256
+
+| 参数 | 作用 |
+| --- | --- |
+| `--python <exe>` | 指定解释器 |
+| `--mirror <url>` | 指定 PyPI 镜像 |
+| `--no-assets` | 只装运行时，不下载模型字体 |
+
+> **为什么全走国内源**：这个插件的使用者主要是国内高校师生，用来读英文文献。pypi.org 和 GitHub/HuggingFace 上的资源在国内经常不可用，所以默认顺序是国内镜像优先，官方源只作最后兜底。BabelDOC 自己选下载源时反而会挑中最先响应的那个（常常是 GitHub），然后整批超时——第 4 步的脚本就是为此存在。
+
+装好后的目录形态：
 
 ```text
 C:\Users\name\.dsh\babeldoc\
@@ -119,9 +142,9 @@ C:\Users\name\.dsh\babeldoc\
   venv\Scripts\babeldoc.exe
 ```
 
-它由 `pip install babeldoc` 装进独立 venv，不污染 DSH 自带运行时，也不影响系统里的 Python。注意 `bitstring` 需要 `<5`，5.x 删掉了 BabelDOC 用到的 `BitStream`。
+模型与字体单独缓存在 `%USERPROFILE%\.cache\babeldoc`，不属于 venv，可以单独清理。
 
-首次翻译还会用到版面分析模型与字体（约 370MB），默认缓存在 `%USERPROFILE%\.cache\babeldoc`。BabelDOC 会探测多个下载源并选最先响应的一个；在访问 GitHub / HuggingFace 受限的网络里这个选择会让下载全部超时，此时用插件自带的脚本从魔搭镜像逐个下载并校验：
+也可以只补下模型（例如运行时已装好、只缺资源）：
 
 ```powershell
 C:\Users\name\.dsh\babeldoc\venv\Scripts\python.exe babeldoc-on-dsh\scripts\seed-assets.py
@@ -133,12 +156,13 @@ C:\Users\name\.dsh\babeldoc\venv\Scripts\python.exe babeldoc-on-dsh\scripts\seed
 node babeldoc-on-dsh\test\plugin.test.mjs
 ```
 
-覆盖工具与命令注册、入参校验、运行时缺失时的报错，以及 `/babeldoc` 的保存、掩码、查询、清除。不需要 Host、浏览器或模型。
+覆盖工具与命令注册、入参校验、运行时缺失时的报错、`/babeldoc` 的保存/掩码/查询/清除，以及状态命令是否指向一键脚本。不需要 Host、浏览器或模型。
 
 ## 排查
 
-- 报「runtime not found」：确认 `babeldocPath` 指向的 `babeldoc.exe` 存在。
+- 报「runtime not found」：跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs`，或确认 `babeldocPath` 指向的 `babeldoc.exe` 存在。
 - 报「needs an OpenAI-compatible API key」：先执行 `/babeldoc key <你的 key>`。
+- 不确定缺什么：执行 `/babeldoc status`，它会分别报告运行时、模型字体、Key 的状态并给出下一步。
 - 翻译中途报错：结果里的 `Log:` 指向完整日志，常见原因是余额不足、模型名不对或 PDF 损坏。
 - 部分 PDF 排版错乱：调用时传 `enhance_compatibility: true`。
 

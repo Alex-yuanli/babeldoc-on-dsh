@@ -15,16 +15,62 @@ import { spawn } from 'node:child_process'
 import { createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import Schema from '@deepseek-ai/schemastery'
 
 export const name = 'babeldoc-on-dsh'
 export const inject = ['tools']
 
 /** Where the managed runtime keeps the BabelDOC launcher. */
-const DEFAULT_RUNTIME = join(homedir(), '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe')
+const DEFAULT_RUNTIME =
+  process.platform === 'win32'
+    ? join(homedir(), '.dsh', 'babeldoc', 'venv', 'Scripts', 'babeldoc.exe')
+    : join(homedir(), '.dsh', 'babeldoc', 'venv', 'bin', 'babeldoc')
 
 /** Where `/babeldoc key` stores the key the user types into the composer. */
 const SETTINGS_PATH = join(homedir(), '.dsh', 'babeldoc', 'settings.json')
+
+/** This package's own directory, used to name the bundled setup script. */
+const PACKAGE_DIR = dirname(fileURLToPath(import.meta.url))
+
+/**
+ * The Node binary to name in the setup command. In the desktop build the Host
+ * runs inside Electron, where `process.execPath` is the app itself and cannot
+ * execute a script, so prefer the Node runtime DSH ships.
+ * @returns {string} Path to a node executable, or the bare command name.
+ */
+function nodeBinary() {
+  if (process.versions.electron === undefined) return process.execPath
+  const base = join(homedir(), '.dsh', 'dsh-runtimes')
+  const name = process.platform === 'win32' ? 'node.exe' : 'node'
+  try {
+    for (const runtime of readdirSync(base)) {
+      const candidate = join(base, runtime, 'dependencies', 'node', 'bin', name)
+      if (existsSync(candidate)) return candidate
+    }
+  } catch {
+    /* fall back to a bare `node` from PATH */
+  }
+  return 'node'
+}
+
+/** The exact command that installs the runtime, quoted for copy-paste. */
+const SETUP_COMMAND = `"${nodeBinary()}" "${join(PACKAGE_DIR, 'scripts', 'setup-runtime.mjs')}"`
+
+/**
+ * Count cached BabelDOC assets, ignoring partially downloaded files.
+ * @returns {{ fonts: number, cmaps: number, models: number }} Per-category counts.
+ */
+function assetCounts() {
+  const count = (sub) => {
+    try {
+      return readdirSync(join(homedir(), '.cache', 'babeldoc', sub)).filter((name) => !name.endsWith('.part')).length
+    } catch {
+      return 0
+    }
+  }
+  return { fonts: count('fonts'), cmaps: count('cmap'), models: count('models') }
+}
 
 /**
  * Read the settings the user wrote with the `/babeldoc` command.
@@ -422,7 +468,7 @@ export function apply(ctx, config) {
         const runtime = typeof settings.babeldocPath === 'string' && settings.babeldocPath !== '' ? settings.babeldocPath : DEFAULT_RUNTIME
         if (!existsSync(runtime)) {
           throw new Error(
-            `BabelDOC runtime not found at ${runtime}. Install it first (Python 3.12 + pip install BabelDOC), or point babeldocPath at the babeldoc.exe that exists.`,
+            `BabelDOC runtime not found at ${runtime}. Install it once with:\n  ${SETUP_COMMAND}\nThen retry, or point babeldocPath at an existing babeldoc executable.`,
           )
         }
         const { apiKey, baseUrl, model } = endpoint()
@@ -529,18 +575,34 @@ export function apply(ctx, config) {
             typeof settings.babeldocPath === 'string' && settings.babeldocPath !== '' ? settings.babeldocPath : DEFAULT_RUNTIME
           switch (verb) {
             case '':
-            case 'status':
+            case 'status': {
+              const assets = assetCounts()
+              const runtimeReady = existsSync(runtime)
+              const assetsReady = assets.fonts > 0 && assets.cmaps > 0 && assets.models > 0
+              const counts = `字体 ${assets.fonts} · cmap ${assets.cmaps} · 模型 ${assets.models}`
+              const next =
+                !runtimeReady
+                  ? `运行时未安装，先执行一次：\n  ${SETUP_COMMAND}`
+                  : !assetsReady
+                    ? `模型/字体未下载完整（${counts}），执行一次可补全，已完成的会跳过：\n  ${SETUP_COMMAND}`
+                    : current.apiKey === ''
+                      ? '执行 /babeldoc key <你的 API Key> 完成配置'
+                      : '已就绪，直接说「把 xxx.pdf 翻译成中文」即可'
               return {
                 kind: 'success',
                 text: [
                   'BabelDOC 状态',
-                  `- 运行时：${runtime}${existsSync(runtime) ? '' : '（不存在）'}`,
+                  `- 运行时：${runtime}${runtimeReady ? '（已安装）' : '（未安装）'}`,
+                  `- 模型字体：${assetsReady ? '已就绪' : '未就绪'}（${counts}）`,
                   `- 接口：${current.baseUrl}`,
                   `- 模型：${current.model}`,
                   `- API Key：${current.apiKey === '' ? '未设置' : maskSecret(current.apiKey)}`,
                   `- 设置文件：${SETTINGS_PATH}`,
+                  '',
+                  `下一步：${next}`,
                 ].join('\n'),
               }
+            }
             case 'key':
               if (value.length < 8) return { kind: 'error', text: '用法：/babeldoc key sk-...（至少 8 个字符）' }
               writeUserSettings({ apiKey: value })

@@ -131,3 +131,13 @@ test('the /babeldoc command stores, masks, reports, and clears the key', () => {
 
   rmSync(SETTINGS, { force: true })
 })
+
+test('status names the bundled setup script when the runtime is missing', () => {
+  const { captured } = mount(BASE_CONFIG)
+  rmSync(SETTINGS, { force: true })
+  const status = captured.command.handler({ rawInput: '' })
+  assert.equal(status.kind, 'success')
+  assert.match(status.text, /运行时未安装/)
+  assert.match(status.text, /setup-runtime\.mjs/)
+  rmSync(SETTINGS, { force: true })
+})
