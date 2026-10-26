@@ -3,17 +3,23 @@
  * Run with: node test\plugin.test.mjs
  */
 import assert from 'node:assert/strict'
-import { mkdirSync, readFileSync, rmSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import test from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { apply, rebaseHomePath } from '../index.js'
 
-const HOME = homedir()
-const SETTINGS = join(HOME, '.dsh', 'babeldoc', 'settings.json')
+// Redirect the plugin's settings file before importing it, so a test run never
+// reads or deletes the real ~/.dsh/babeldoc/settings.json (which holds the key).
+const SANDBOX = mkdtempSync(join(tmpdir(), 'babeldoc-test-'))
+process.env.BABELDOC_SETTINGS_PATH = join(SANDBOX, 'settings.json')
+const { apply, rebaseHomePath } = await import('../index.js')
+
+const SETTINGS = process.env.BABELDOC_SETTINGS_PATH
 /** A two-page English PDF used for the input-validation cases. */
 const SAMPLE = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'sample.pdf')
+
+process.on('exit', () => rmSync(SANDBOX, { recursive: true, force: true }))
 
 /**
  * Build a fake Host context that captures what the plugin registers.
@@ -90,14 +96,19 @@ test('reports a missing runtime before touching the network', async () => {
   const { captured } = mount(BASE_CONFIG)
   await assert.rejects(
     captured.tool.execute({ files: [SAMPLE] }, { signal: new AbortController().signal }),
-    /runtime not found/,
+    (error) => {
+      assert.match(error.message, /runtime not found/i)
+      // The configured path is authoritative: it must be what the error names,
+      // not the managed default that happens to exist on this machine.
+      assert.match(error.message, /definitely[\\/]missing[\\/]babeldoc\.exe/)
+      return true
+    },
   )
 })
 
 test('the /babeldoc command stores, masks, reports, and clears the key', () => {
   const { captured } = mount(BASE_CONFIG)
   rmSync(SETTINGS, { force: true })
-  mkdirSync(join(HOME, '.dsh', 'babeldoc'), { recursive: true })
 
   const status = captured.command.handler({ rawInput: '' })
   assert.equal(status.kind, 'success')

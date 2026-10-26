@@ -67,10 +67,12 @@ export function rebaseHomePath(value) {
 }
 
 /**
- * Resolve the BabelDOC launcher. A path that still names another machine's home
- * directory is rebased onto this user's home, so the managed runtime is found
- * without the user editing the configuration: the configured path wins, then
- * the same path rebased onto this home, then the managed default.
+ * Resolve the BabelDOC launcher. An empty `babeldocPath` means the managed
+ * runtime under this user's home. A configured path is authoritative: it is
+ * tried as written, then rebased onto this user's home (so a profile copied
+ * from another machine keeps working), and it is never silently replaced by the
+ * managed default — running a different binary than the configured one would
+ * hide the mistake instead of reporting it.
  * @param {unknown} configured The `babeldocPath` setting.
  * @returns {{ runtime: string, found: boolean, tried: string[] }} Resolution result.
  */
@@ -81,18 +83,27 @@ function resolveRuntime(configured) {
     const candidate = value.trim()
     if (candidate !== '' && !tried.includes(candidate)) tried.push(candidate)
   }
-  const rebased = rebaseHomePath(configured)
-  push(configured)
-  push(rebased)
-  push(DEFAULT_RUNTIME)
+  const given = typeof configured === 'string' ? configured.trim() : ''
+  if (given === '') {
+    push(DEFAULT_RUNTIME)
+  } else {
+    push(given)
+    push(rebaseHomePath(given))
+  }
   const found = tried.find((candidate) => existsSync(candidate))
   if (found !== undefined) return { runtime: found, found: true, tried }
-  const expected = typeof rebased === 'string' && rebased.trim() !== '' ? rebased.trim() : DEFAULT_RUNTIME
-  return { runtime: expected, found: false, tried }
+  return { runtime: tried[0] ?? DEFAULT_RUNTIME, found: false, tried }
 }
 
-/** Where `/babeldoc key` stores the key the user types into the composer. */
-const SETTINGS_PATH = join(homedir(), '.dsh', 'babeldoc', 'settings.json')
+/**
+ * Where `/babeldoc key` stores the key the user types into the composer.
+ * `BABELDOC_SETTINGS_PATH` redirects it, which the test suite uses so a test run
+ * never reads or deletes the real settings file.
+ */
+const SETTINGS_PATH =
+  typeof process.env.BABELDOC_SETTINGS_PATH === 'string' && process.env.BABELDOC_SETTINGS_PATH.trim() !== ''
+    ? process.env.BABELDOC_SETTINGS_PATH.trim()
+    : join(homedir(), '.dsh', 'babeldoc', 'settings.json')
 
 /** This package's own directory, used to name the bundled setup script. */
 const PACKAGE_DIR = dirname(fileURLToPath(import.meta.url))

@@ -187,11 +187,11 @@ C:\Users\name\.dsh\babeldoc\venv\Scripts\python.exe babeldoc-on-dsh\scripts\seed
 node babeldoc-on-dsh\test\plugin.test.mjs
 ```
 
-覆盖工具与命令注册、入参校验、运行时缺失时的报错、`/babeldoc` 的保存/掩码/查询/清除，以及状态命令是否指向一键脚本。不需要 Host、浏览器或模型。
+覆盖工具与命令注册、入参校验、运行时缺失时的报错（含「显式路径不回退」）、`/babeldoc` 的保存/掩码/查询/清除，以及状态命令是否指向一键脚本、跨用户主目录的路径改写。不需要 Host、浏览器或模型，也不会读写你真实的 `settings.json`。
 
 ## 排查
 
-- 报「runtime not found」：报错会列出尝试过的每个路径。插件会把配置里继承来的 `C:\Users\<别人>\.dsh\...` 自动换成本机用户主目录再找，所以通常跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs` 即可；也可以让 `babeldocPath` 直接指向存在的 `babeldoc.exe`。
+- 报「runtime not found」：报错会列出尝试过的每个路径。显式配置的 `babeldocPath` 是权威值——它不存在时不会偷偷回退到默认运行时，否则你会在不知情的情况下跑另一个二进制。插件会先把它换成本机用户主目录再找（所以 profile 跨机器复制仍可用），通常跑一次 `node babeldoc-on-dsh\scripts\setup-runtime.mjs` 即可；也可以让 `babeldocPath` 直接指向存在的 `babeldoc.exe`。
 - 报「needs an OpenAI-compatible API key」：先执行 `/babeldoc key <你的 key>`。
 - `babeldoc.exe` 一启动就崩，报 `ImportError: DLL load failed while importing _mupdf`：PyMuPDF 2.0 在部分 Windows 上加载不了这个扩展。一键脚本已固定 `pymupdf<2`，若手动升级过，用 venv 里的解释器降回 1.26.x：
   `%USERPROFILE%\.dsh\babeldoc\venv\Scripts\python.exe -m pip install "pymupdf<2"`
